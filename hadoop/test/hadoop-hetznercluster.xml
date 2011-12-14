@@ -1,0 +1,11 @@
+<?xml version="1.0"?>
+    <configuration>
+        <property>
+            <name>fs.default.name</name>
+            <value>hdfs://atix.andrewbille.ru/</value>
+        </property>
+        <property>
+            <name>mapreduce.jobtracker.address</name>
+            <value>atix.andrewbille.ru:54021</value>
+        </property>
+</configuration>

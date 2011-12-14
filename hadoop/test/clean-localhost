@@ -1,0 +1,9 @@
+#!/bin/sh
+
+PATH_PART=`dirname $0`
+CURRENT_PATH=`pwd`
+cd $PATH_PART
+PATH_PART=`pwd`
+cd $CURRENT_PATH
+
+hdfs dfs -rmr hdfs://localhost/kmeans
