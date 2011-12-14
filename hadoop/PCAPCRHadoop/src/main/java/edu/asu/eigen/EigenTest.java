@@ -6,6 +6,7 @@ import org.apache.commons.math.linear.Array2DRowRealMatrix;
 import org.apache.commons.math.linear.EigenDecompositionImpl;
 import org.apache.commons.math.linear.RealMatrix;
 
+
 /**
  *
  * @author Pavel Nuzhdin <pnzhdin@gmail.com>
