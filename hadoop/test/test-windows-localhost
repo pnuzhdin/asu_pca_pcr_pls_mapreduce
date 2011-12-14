@@ -1,0 +1,36 @@
+#!/bin/sh
+
+# Altai State University, Pavel Nuzhdin, 2011
+
+PATH_PART=`dirname $0`
+CURRENT_PATH=`pwd`
+cd "$PATH_PART"
+PATH_PART=`pwd`
+cd "$CURRENT_PATH"
+
+PATH_PART=`cygpath -w "$PATH_PART"`
+
+hdfs dfs -conf "$PATH_PART\\hadoop-localhost.xml" -Ddfs.blocksize=134217728 -put \
+     "$PATH_PART\\..\\..\\..\\data\\yearprediction\\yearprediction-training" /pca/yearprediction-training
+
+hdfs dfs -conf "$PATH_PART\\hadoop-localhost.xml" -Ddfs.blocksize=134217728 -put \
+     "$PATH_PART\\..\\..\\..\\data\\yearprediction\\yearprediction-testing" /pca/yearprediction-testing
+
+hadoop jar "$PATH_PART\\..\\PCAPCRHadoop\target\\PCAPCRHadoop-1.0-jar-with-dependencies.jar" \
+edu.asu.hadoop.pcapcr.PCAPCRHadoop \
+-conf "$PATH_PART\\hadoop-localhost.xml" \
+-Ddfs.blocksize=134217728 \
+91 \
+1 \
+90 \
+0 \
+463715 \
+51630 \
+y \
+y \
+Threshold-0.9 \
+/pca/yearprediction-training \
+/pca/yearprediction-testing \
+/pca/yearprediction-pcadata \
+/pca/yearprediction-temp \
+"$PATH_PART\\elapsedtime"
