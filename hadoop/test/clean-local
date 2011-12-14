@@ -1,9 +1,0 @@
-#!/bin/sh
-rm -rf \
-.output-centroids.txt.crc \
-output-centroids.txt \
-tmpoutput \
-tmpoutput-tmp \
-.tmpoutput-tmp.crc \
-output.txt \
-.output.txt.crc
