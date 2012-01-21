@@ -1,4 +1,4 @@
-/** Altai State University, 2011 */
+/** Altai State University, 2012 */
 package edu.asu.hadoop.hyperspectral;
 
 import java.io.IOException;
