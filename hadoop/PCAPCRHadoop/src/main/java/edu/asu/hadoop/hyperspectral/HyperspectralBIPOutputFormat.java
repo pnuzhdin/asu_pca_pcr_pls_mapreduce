@@ -21,8 +21,8 @@ import edu.asu.hadoop.IntArrayWritable;
  * in Hadoop 0.21.0 (FileOutputFormat)
  * @author Pavel Nuzhdin <pnzhdin@gmail.com>
  */
-public class HyperspectralBIPOutputFormat
-    extends FileOutputFormat<LongWritable, IntArrayWritable> {
+public class HyperspectralBIPOutputFormat<K,V>
+    extends FileOutputFormat<K,V> {
 
 //    /** Number of lines of data in the file */
 //    public static final String NUMLINES =
@@ -98,12 +98,12 @@ public class HyperspectralBIPOutputFormat
     }
 
     /**
-     * Set the number of lines of data in the file
+     * Set is round downward
      *
      * @param job Job
      * @param isRoundDownward Is round downward ?
      */
-    public static void setNumPixelsPerLine(JobContext job, boolean isRoundDownward) {
+    public static void setIsRoundDownward(JobContext job, boolean isRoundDownward) {
         job.getConfiguration().setBoolean(ISROWNDDOWNWARD, isRoundDownward);
     }
 
@@ -128,7 +128,7 @@ public class HyperspectralBIPOutputFormat
     }
 
     @Override
-    public RecordWriter<LongWritable, IntArrayWritable> getRecordWriter(TaskAttemptContext job)
+    public RecordWriter<K,V> getRecordWriter(TaskAttemptContext job)
             throws IOException, InterruptedException {
         short precision = 1;
         boolean isLittleEndian = false;
