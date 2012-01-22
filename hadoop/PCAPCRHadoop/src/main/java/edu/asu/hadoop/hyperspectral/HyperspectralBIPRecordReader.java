@@ -1,12 +1,18 @@
 /** Altai State University, 2012 */
 package edu.asu.hadoop.hyperspectral;
 
+import java.io.InputStream;
 import java.io.IOException;
-import java.io.DataInputStream;
-import org.apache.hadoop.fs.Seekable;
+import org.apache.hadoop.fs.FSDataInputStream;
+import org.apache.hadoop.fs.FileSystem;
+import org.apache.hadoop.fs.Path;
+import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.io.LongWritable;
 import org.apache.hadoop.io.IntWritable;
-import org.apache.hadoop.mapred.*;
+import org.apache.hadoop.io.compress.CompressionCodec;
+import org.apache.hadoop.io.compress.CompressionCodecFactory;
+import org.apache.hadoop.mapreduce.*;
+import org.apache.hadoop.mapreduce.lib.input.FileSplit;
 
 import edu.asu.hadoop.IntArrayWritable;
 
@@ -17,7 +23,7 @@ import edu.asu.hadoop.IntArrayWritable;
  * @author Pavel Nuzhdin <pnzhdin@gmail.com>
  */
 public class HyperspectralBIPRecordReader
-    implements RecordReader<LongWritable, IntArrayWritable> {
+    extends RecordReader<LongWritable, IntArrayWritable> {
 
     //NOTE: Used https://github.com/RIPE-NCC/hadoop-pcap/blob/master/hadoop-pcap-lib/src/main/java/net/ripe/hadoop/pcap/io/reader/PcapRecordReader.java as a template
 
@@ -28,19 +34,16 @@ public class HyperspectralBIPRecordReader
     private boolean isLittleEndian;
     private boolean isUnsigned;
 
-    Seekable baseStream;
-	DataInputStream stream;
-	Reporter reporter;
+	private InputStream in;
+    private FileSplit fileSplit;
 
-	long lastkey = 0;
-	long start, end;
+	private long lastkey = 0;
+	private long start, end, position;
+
+    private LongWritable key;
+    private IntArrayWritable value;
 
     public HyperspectralBIPRecordReader(
-            long start,
-            long end,
-            Seekable baseStream,
-            DataInputStream stream,
-            Reporter reporter,
 //            long numLines,
 //            long numPixPerLine,
             int numBands,
@@ -48,11 +51,6 @@ public class HyperspectralBIPRecordReader
             boolean isLittleEndian,
             boolean isUnsigned)
             throws IOException {
-        this.start = start;
-        this.end = end;
-        this.baseStream = baseStream;
-        this.stream = stream;
-        this.reporter = reporter;
         this.numBands = numBands;
 //        this.numLines = numLines;
         this.isLittleEndian = isLittleEndian;
@@ -61,11 +59,56 @@ public class HyperspectralBIPRecordReader
         this.precision = precision;
     }
 
-    public boolean next(LongWritable key, IntArrayWritable value)
-            throws IOException {
+    private IntArrayWritable newValue() {
+        IntWritable[] buffer = new IntWritable[numBands];
+        for (int i = 0; i < buffer.length; i++) {
+            buffer[i] = new IntWritable();
+        }
+        return new IntArrayWritable(buffer);
+    }
+
+    @Override
+    public void close() throws IOException {
+        if (in != null) {
+            in.close();
+        }
+    }
+
+    @Override
+    public float getProgress() throws IOException {
+        if (start == end) {
+            return 0;
+        }
+        return Math.min(1.0f, (position - start) / (float) (end - start));
+    }
+
+    @Override
+    public void initialize(InputSplit split, TaskAttemptContext context)
+            throws IOException, InterruptedException {
+        Configuration conf = context.getConfiguration();
+        this.fileSplit = (FileSplit) split;
+        this.start = fileSplit.getStart();
+        this.end = fileSplit.getLength();
+        this.position = 0;
+        Path path = fileSplit.getPath();
+        FileSystem fs = path.getFileSystem(conf);
+        FSDataInputStream dis = fs.open(path);
+        CompressionCodecFactory codecs = new CompressionCodecFactory(conf);
+        CompressionCodec codec = codecs.getCodec(path);
+        if (codec != null) {
+            this.in = codec.createInputStream(dis);
+        } else {
+            this.in = dis;
+        }
+    }
+
+    @Override
+    public boolean nextKeyValue() throws IOException, InterruptedException {
+        key = new LongWritable();
+        value = newValue();
         byte[] pixelBuffer = new byte[precision];
         for (int band = 0; band < numBands; band++) {
-            if (stream.read(pixelBuffer) == precision) {
+            if (in.read(pixelBuffer) == precision) {
                 //NOTE: In Java all of binary is in Big Endian
                 int pixelValue;
                 if (precision == 1) {
@@ -89,40 +132,19 @@ public class HyperspectralBIPRecordReader
                 return false;
             }
         }
-        
         key.set(++lastkey);
-
-        reporter.setStatus("Read " + getPos() + " of " + end + " bytes");
-        reporter.progress();
 
         return true;
     }
 
-    public LongWritable createKey() {
-        return new LongWritable();
+    @Override
+    public LongWritable getCurrentKey() throws IOException, InterruptedException {
+        return key;
     }
 
-    public IntArrayWritable createValue() {
-        IntWritable[] buffer = new IntWritable[numBands];
-        for (int i = 0; i < buffer.length; i++) {
-            buffer[i] = new IntWritable();
-        }
-        return new IntArrayWritable(buffer);
-    }
-
-    public long getPos() throws IOException {
-        return baseStream.getPos();
-    }
-
-    public void close() throws IOException {
-        stream.close();
-    }
-
-    public float getProgress() throws IOException {
-        if (start == end) {
-            return 0;
-        }
-        return Math.min(1.0f, (getPos() - start) / (float) (end - start));
+    @Override
+    public IntArrayWritable getCurrentValue() throws IOException, InterruptedException {
+        return value;
     }
 
 }

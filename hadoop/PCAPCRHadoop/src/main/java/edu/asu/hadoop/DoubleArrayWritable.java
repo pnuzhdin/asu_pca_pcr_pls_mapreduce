@@ -1,8 +1,6 @@
 package edu.asu.hadoop;
 
-import org.apache.hadoop.io.ArrayWritable;
 import org.apache.hadoop.io.DoubleWritable;
-import org.apache.hadoop.io.Writable;
 
 
 /**
@@ -10,7 +8,7 @@ import org.apache.hadoop.io.Writable;
  * @author Pavel Nuzhdin <pnzhdin@gmail.com>
  */
 public class DoubleArrayWritable
-    extends ArrayWritable {
+    extends ExtendedArrayWritable<DoubleWritable> {
     
     public DoubleArrayWritable() {
         super(DoubleWritable.class);
@@ -18,14 +16,6 @@ public class DoubleArrayWritable
 
     public DoubleArrayWritable(DoubleWritable[] values) {
         super(DoubleWritable.class, values);
-    }
-    
-    public void set(DoubleWritable[] values) {
-        super.set(values);
-    }
-    
-    public DoubleWritable get(int idx) {
-        return (DoubleWritable) get()[idx];
     }
     
     public double[] getVector(int from, int to) {
