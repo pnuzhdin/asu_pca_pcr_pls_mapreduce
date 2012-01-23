@@ -22,7 +22,7 @@
                     <archive>
                         <manifest>
                             <addClasspath>true</addClasspath>
-                            <mainClass>edu.asu.hadoop.pcapcr.PCAPCRHadoop</mainClass>
+                            <mainClass>edu.asu.hadoop.pcapcr.PCAPCRHadoop_BIP</mainClass>
                         </manifest>
                     </archive>
                 </configuration>
