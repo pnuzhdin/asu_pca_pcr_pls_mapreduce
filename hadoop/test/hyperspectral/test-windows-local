@@ -1,0 +1,23 @@
+#!/bin/sh
+
+# Altai State University, Pavel Nuzhdin, 2011
+
+PATH_PART=`dirname $0`
+CURRENT_PATH=`pwd`
+cd "$PATH_PART"
+PATH_PART=`pwd`
+cd "$CURRENT_PATH"
+
+PATH_PART=`cygpath -w "$PATH_PART"`
+
+hadoop jar "$PATH_PART\\..\\..\\PCAPCRHadoop\target\\PCAPCRHadoop-1.0-jar-with-dependencies.jar" edu.asu.hadoop.pcapcr.PCAPCRHadoop_BIP -conf "$PATH_PART\\hadoop-local.xml" \
+"<H" \
+147 \
+20 \
+20 \
+n \
+n \
+"$PATH_PART\\..\\..\\..\\..\\data\\hyperspectral-image\\09174_hslvl3_swir-i_hx06.bip" \
+"$PATH_PART\\..\\..\\..\\..\\data\\hyperspectral-image\\09174_hslvl3_swir-i_hx06.bip" \
+"$PATH_PART\\hyperspectral-image-temp" \
+"$PATH_PART\\elapsedtime"
