@@ -14,6 +14,7 @@ import org.apache.hadoop.mapreduce.*;
 import org.apache.hadoop.mapreduce.lib.output.*;
 
 import edu.asu.hadoop.IntArrayWritable;
+import org.apache.hadoop.conf.Configuration;
 
 
 /**
@@ -139,10 +140,20 @@ public class HyperspectralBIPOutputFormat<K,V>
             isUnsigned = true;
         }
 
-        if (!getCompressOutput(job)) {
-            Path file = (Path) getOutputPath(job);
-            FileSystem fs = file.getFileSystem(job.getConfiguration());
-            FSDataOutputStream fileOut = fs.create(file);
+        Configuration conf = job.getConfiguration();
+        boolean isCompressed = getCompressOutput(job);
+        CompressionCodec codec = null;
+        String extension = "";
+        if (isCompressed) {
+            Class<? extends CompressionCodec> codecClass =
+                    getOutputCompressorClass(job, DefaultCodec.class);
+            codec = (CompressionCodec) ReflectionUtils.newInstance(codecClass, conf);
+            extension = codec.getDefaultExtension();
+        }
+        Path file = getDefaultWorkFile(job, extension);
+        FileSystem fs = file.getFileSystem(conf);
+        if (!isCompressed) {
+            FSDataOutputStream fileOut = fs.create(file, false);
             return new HyperspectralBIPRecordWriter(
                     fileOut,
 //                    job.getLong(NUMPIXPERLINE, 1),
@@ -151,11 +162,7 @@ public class HyperspectralBIPOutputFormat<K,V>
                     isUnsigned,
                     getIsRoundDownward(job));
         } else {
-            Class codecClass = getOutputCompressorClass(job, DefaultCodec.class);
-            CompressionCodec codec = (CompressionCodec) ReflectionUtils.newInstance(codecClass, job.getConfiguration());
-            Path file = getDefaultWorkFile(job, codec.getDefaultExtension());
-            FileSystem fs = file.getFileSystem(job.getConfiguration());
-            FSDataOutputStream fileOut = fs.create(file);
+            FSDataOutputStream fileOut = fs.create(file, false);
             return new HyperspectralBIPRecordWriter(
                     new DataOutputStream(codec.createOutputStream(fileOut)),
 //                    job.getLong(NUMPIXPERLINE, 1),

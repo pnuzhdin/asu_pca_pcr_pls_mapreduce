@@ -57,14 +57,16 @@ public class HyperspectralBIPRecordWriter<K,V>
     public void write(Object key, Object value)
             throws IOException {
         if (value == null) {
-            return;
+            throw new RuntimeException("Null value in input");
+            //return;
         }
         if (!(value instanceof IntArrayWritable) && !(value instanceof DoubleArrayWritable)) {
-            return;
+            throw new RuntimeException("Bad value format in input");
+            //return;
         }
         ExtendedArrayWritable<? extends Writable> valueArray
                 = (ExtendedArrayWritable<? extends Writable>) value;
-        for (int band = 0; band < valueArray.length; band++) {
+        for (int band = 0; band < valueArray.length(); band++) {
             //NOTE: In Java all of binary is in Big Endian
             Writable pixelValueBase = valueArray.get(band);
             int pixelValue;
@@ -83,7 +85,8 @@ public class HyperspectralBIPRecordWriter<K,V>
                     maxValue = Integer.MAX_VALUE;
                     minValue = Integer.MIN_VALUE;
                 } else {
-                    return;
+                    throw new RuntimeException("Bad data format settings");
+                    //return;
                 }
                 pixelValue = isRoundDownward ? (int) Math.floor(pixelValueDouble) :  (int) pixelValueDouble;
                 if (pixelValue < minValue) {
@@ -92,23 +95,29 @@ public class HyperspectralBIPRecordWriter<K,V>
                     pixelValue = maxValue;
                 }
             } else {
-                return;
+                throw new RuntimeException("Bad value format in input");
+                //return;
             }
             
             byte[] pixelBuffer = new byte[precision];
             if (precision == 1) {
-                pixelBuffer[0] = (byte)(pixelValue & 0xFF000000);
+                pixelBuffer[0] = (byte)(pixelValue & 0xFF);
             } else if (precision == 2) {
-                pixelBuffer[isLittleEndian ? 1 : 0] = (byte)(pixelValue & 0xFF000000);
-                pixelBuffer[isLittleEndian ? 0 : 1] = (byte)((pixelValue & 0x00FF0000) << 8);
+                pixelBuffer[isLittleEndian ? 0 : 1] = (byte)(pixelValue & 0xFF);
+                pixelBuffer[isLittleEndian ? 1 : 0] = (byte)((pixelValue & 0xFF00) >> 8);
             } else if (precision == 4 && !isUnsigned) {
-                pixelBuffer[isLittleEndian ? 3 : 0] = (byte)(pixelValue & 0xFF000000);
-                pixelBuffer[isLittleEndian ? 2 : 1] = (byte)((pixelValue & 0x00FF0000) << 8);
-                pixelBuffer[isLittleEndian ? 1 : 2] = (byte)((pixelValue & 0x0000FF00) << 16);
-                pixelBuffer[isLittleEndian ? 0 : 3] = (byte)((pixelValue & 0x000000FF) << 24);
+                pixelBuffer[isLittleEndian ? 0 : 3] = (byte)(pixelValue & 0xFF);
+                pixelBuffer[isLittleEndian ? 1 : 2] = (byte)((pixelValue & 0xFF00) >> 8);
+                pixelBuffer[isLittleEndian ? 2 : 1] = (byte)((pixelValue & 0xFF0000) >> 16);
+                pixelBuffer[isLittleEndian ? 3 : 0] = (byte)((pixelValue & 0xFF000000) >> 24);
             } else {
-                return;
+                throw new RuntimeException("Bad value format in input");
+                //return;
             }
+//            for (int j = 0; j < pixelBuffer.length; j++) {
+//                System.out.format("%02X ", pixelBuffer[j]);
+//            }
+//            System.out.println();
             out.write(pixelBuffer);
         }
     }

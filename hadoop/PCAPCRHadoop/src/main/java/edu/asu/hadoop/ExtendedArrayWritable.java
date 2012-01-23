@@ -12,17 +12,13 @@ import org.apache.hadoop.io.Writable;
  */
 public class ExtendedArrayWritable<V extends Writable>
     extends ArrayWritable {
-    
-    public final int length;
 
     public ExtendedArrayWritable(Class<? extends Writable> valueClass) {
         super(valueClass);
-        this.length = 0;
     }
 
     public ExtendedArrayWritable(Class<? extends Writable> valueClass, Writable[] values) {
         super(valueClass, values);
-        this.length = values.length;
     }
 
     @Override
@@ -32,6 +28,10 @@ public class ExtendedArrayWritable<V extends Writable>
     
     public V get(int idx) {
         return (V) get()[idx];
+    }
+
+    public int length() {
+        return get().length;
     }
     
 }

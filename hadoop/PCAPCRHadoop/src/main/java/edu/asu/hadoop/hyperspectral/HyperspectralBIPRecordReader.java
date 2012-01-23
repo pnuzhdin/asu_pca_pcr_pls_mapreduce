@@ -108,7 +108,8 @@ public class HyperspectralBIPRecordReader
         value = newValue();
         byte[] pixelBuffer = new byte[precision];
         for (int band = 0; band < numBands; band++) {
-            if (in.read(pixelBuffer) == precision) {
+            int readedLen = in.read(pixelBuffer);
+            if (readedLen == precision) {
                 //NOTE: In Java all of binary is in Big Endian
                 int pixelValue;
                 if (precision == 1) {
@@ -124,10 +125,12 @@ public class HyperspectralBIPRecordReader
                     byte b4 = pixelBuffer[isLittleEndian ? 0 : 3];
                     pixelValue = ((b1 & 0xFF) << 24) | ((b2 & 0xFF) << 16) | ((b3 & 0xFF) << 8) | (b4 & 0xFF);
                 } else {
-                    //Take French leave
-                    return false;
+                    throw new RuntimeException("Bad value format in input");
+                    //return false;
                 }
                 value.get(band).set(pixelValue);
+            } else if (readedLen > 0) {
+                throw new RuntimeException("Not expected file end");
             } else {
                 return false;
             }
