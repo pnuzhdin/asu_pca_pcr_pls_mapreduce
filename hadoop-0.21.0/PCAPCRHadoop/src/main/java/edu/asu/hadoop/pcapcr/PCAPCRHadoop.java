@@ -895,7 +895,7 @@ public class PCAPCRHadoop
 
         curTime = System.currentTimeMillis();
         Path trainingSetPreparedPath = new Path(tempDataPath + "-trainingsetprepared");
-        //prepareData(conf, trainingSetPath, trainingSetPreparedPath, hyperspectralImageFormat != null);
+        prepareData(conf, trainingSetPath, trainingSetPreparedPath, hyperspectralImageFormat != null);
         printTime(elapsedTimeStream, "prepareTrainingSet", System.currentTimeMillis() - curTime);
 
         if (hyperspectralClasses != null) {
@@ -942,13 +942,13 @@ public class PCAPCRHadoop
 
         curTime = System.currentTimeMillis();
         double[][] PCAComponents = new double[components][dataDimTo - dataDimFrom + 1];
-//        double[][] PCAComponentsAll = new double[universeSize][dataDimTo - dataDimFrom + 1];
+        double[][] PCAComponentsAll = new double[universeSize][dataDimTo - dataDimFrom + 1];
         double[] eigenValues = new double[components];
-//        double[] eigenValuesAll = new double[universeSize];
+        double[] eigenValuesAll = new double[universeSize];
         int i = 0;
         for (Double eigenValue : eigen.descendingMap().keySet()) {
-//            PCAComponentsAll[i] = eigen.descendingMap().get(eigenValue);
-//            eigenValuesAll[i] = eigenValue;
+            PCAComponentsAll[i] = eigen.descendingMap().get(eigenValue);
+            eigenValuesAll[i] = eigenValue;
             if (i < components) {
                 PCAComponents[i] = eigen.descendingMap().get(eigenValue);
                 eigenValues[i] = eigenValue;
@@ -957,10 +957,10 @@ public class PCAPCRHadoop
         }
         ConfigurationUtils.setMatrix(conf, "PCAComponents", PCAComponents);
         ConfigurationUtils.setVector(conf, "eigenValues", eigenValues);
-//        writeVector(conf, new Path(tempDataPath + "-eigenvalues"), eigenValues);
-//        writeVector(conf, new Path(tempDataPath + "-eigenvalues-all"), eigenValuesAll);
-//        writeMatrix(conf, new Path(tempDataPath + "-components"), PCAComponents);
-//        writeMatrix(conf, new Path(tempDataPath + "-components-all"), PCAComponentsAll);
+        writeVector(conf, new Path(tempDataPath + "-eigenvalues"), eigenValues);
+        writeVector(conf, new Path(tempDataPath + "-eigenvalues-all"), eigenValuesAll);
+        writeMatrix(conf, new Path(tempDataPath + "-components"), PCAComponents);
+        writeMatrix(conf, new Path(tempDataPath + "-components-all"), PCAComponentsAll);
 //        Path PCATrainingSetPath = new Path(tempDataPath + "-trainingsetpca");
 //        dataToPCA(conf, trainingSetPreparedPath, PCATrainingSetPath);
 //        printTime(elapsedTimeStream, "trainingSetToPCA", System.currentTimeMillis() - curTime);
@@ -1001,15 +1001,15 @@ public class PCAPCRHadoop
         double[] testingQuality = calculateRegressionQuality(conf, testingSetPreparedPath, testingSetQualityPath);
         printTime(elapsedTimeStream, "calculatingTestingQuality (MAE: " + testingQuality[0] + ", RMSE: " + testingQuality[1] + ")", System.currentTimeMillis() - curTime);
 
-//        curTime = System.currentTimeMillis();
-//        Path PCATestingSetPath = new Path(tempDataPath + "-testingsetpca");
-//        dataToPCA(conf, testingSetPreparedPath, PCATestingSetPath, hyperspectralImageFormat != null);
-//        printTime(elapsedTimeStream, "testingSetToPCA", System.currentTimeMillis() - curTime);
-//
-//        curTime = System.currentTimeMillis();
-//        Path PCATrainingSetPath = new Path(tempDataPath + "-trainingsetpca");
-//        dataToPCA(conf, trainingSetPreparedPath, PCATrainingSetPath, hyperspectralImageFormat != null);
-//        printTime(elapsedTimeStream, "trainingSetToPCA", System.currentTimeMillis() - curTime);
+        curTime = System.currentTimeMillis();
+        Path PCATestingSetPath = new Path(tempDataPath + "-testingsetpca");
+        dataToPCA(conf, testingSetPreparedPath, PCATestingSetPath, hyperspectralImageFormat != null);
+        printTime(elapsedTimeStream, "testingSetToPCA", System.currentTimeMillis() - curTime);
+
+        curTime = System.currentTimeMillis();
+        Path PCATrainingSetPath = new Path(tempDataPath + "-trainingsetpca");
+        dataToPCA(conf, trainingSetPreparedPath, PCATrainingSetPath, hyperspectralImageFormat != null);
+        printTime(elapsedTimeStream, "trainingSetToPCA", System.currentTimeMillis() - curTime);
 
         printTime(elapsedTimeStream, "PCR", System.currentTimeMillis() - taskBeginTime);
         
